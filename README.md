@@ -34,7 +34,7 @@ it ensures high performance, scalability, and a smooth user experience.
 #### 1️⃣ Clone the repository
 
 ```bash
-git clone https://github.com/your-team/AirNest-Realty.git
+git clone https://github.com/cwalton133/AirNest-Realty.git
 cd AirNest-Realty
 
 
@@ -86,8 +86,8 @@ Project Structure
 
 AirNest-Realty/
 │── backend/               # Django backend (DRF)
-│   ├── core/              # Main Django app
-│   ├── api/               # API endpoints
+│   ├── airnest_realty/              # Main Django app
+│   ├── listing/               # API endpoints
 │   ├── static/            # Static files
 │   ├── media/             # Media uploads
 │   ├── manage.py          # Django entry point
