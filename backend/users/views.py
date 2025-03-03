@@ -8,6 +8,11 @@ from django.core.mail import EmailMessage
 from django.utils import timezone
 from django.urls import reverse
 from .models import *
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import login
+from .serializers import UserRegisterSerializer, UserLoginSerializer
 
 
 @login_required
@@ -177,3 +182,18 @@ def ResetPassword(request, reset_id):
         return redirect('forgot-password')
 
     return render(request, 'reset_password.html')
+
+
+class UserRegisterAPIView(generics.CreateAPIView):
+    serializer_class = UserRegisterSerializer
+
+
+class UserLoginAPIView(generics.GenericAPIView):
+    serializer_class = UserLoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data
+        login(request, user)  # Log the user in
+        return Response({"message": "Login successful"}, status=status.HTTP_200_OK)
