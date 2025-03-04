@@ -1,40 +1,64 @@
 from rest_framework import serializers
-from .models import PasswordReset
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model, authenticate
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import CustomUser
+
+User = get_user_model()
 
 
-class UserRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role']
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=6)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
-        extra_kwargs = {
-            'password': {'write_only': True},
-            'email': {'required': True}
-        }
+        fields = ['username', 'email', 'password', 'role']
 
     def create(self, validated_data):
-        user = User(**validated_data)
-        user.set_password(validated_data['password'])  # Hash the password
-        user.save()
+        user = User.objects.create_user(**validated_data)
         return user
 
 
-class UserLoginSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
-    password = serializers.CharField(required=True)
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        user = authenticate(**data)
-        if user is None:
-            raise serializers.ValidationError('Invalid login credentials')
-        return user
+        user = authenticate(
+            username=data['username'], password=data['password'])
+        if not user:
+            raise serializers.ValidationError("Invalid credentials.")
+        return {'user': user}
 
 
-class PasswordResetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PasswordReset
-        fields = ['id', 'user', 'reset_id', 'created_when']
-        read_only_fields = ['id', 'reset_id', 'created_when']
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            user = User.objects.get(email=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                "User with this email does not exist.")
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+
+        send_mail(
+            "Password Reset Request",
+            f"Click the link below to reset your password:\n{reset_url}",
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        return value
