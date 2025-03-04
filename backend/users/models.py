@@ -1,15 +1,25 @@
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
-from django.contrib.auth.models import User
-import uuid
-
-# Create your models here.
+from django.utils.translation import gettext_lazy as _
 
 
-class PasswordReset(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    reset_id = models.UUIDField(
-        default=uuid.uuid4, unique=True, editable=False)
-    created_when = models.DateTimeField(auto_now_add=True)
+class CustomUser(AbstractUser):
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('agent', 'Agent'),
+        ('client', 'Client'),
+    ]
+    role = models.CharField(
+        max_length=20, choices=ROLE_CHOICES, default='client')
+
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    profile_picture = models.ImageField(
+        upload_to='profiles/', blank=True, null=True)
+    is_verified = models.BooleanField(default=False)
+    groups = models.ManyToManyField(
+        Group, related_name="customuser_set", blank=True)
+    user_permissions = models.ManyToManyField(
+        Permission, related_name="customuser_permissions_set", blank=True)
 
     def __str__(self):
-        return f"Password reset for {self.user.username} at {self.created_when}"
+        return self.username
