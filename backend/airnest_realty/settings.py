@@ -147,8 +147,8 @@ LOGIN_URL = 'login'
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = "pythontutorials36@gmail.com"
-EMAIL_HOST_PASSWORD = "jjrc jimd yzcn ciws"
+EMAIL_HOST_USER = "someone@gmail.com"
+EMAIL_HOST_PASSWORD = "your-password"
 
 REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': False
